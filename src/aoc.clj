@@ -46,7 +46,7 @@
 (defn- map-parsers [parsers data]
   (cond
     (fn? parsers) (parsers data)
-    (= 1 (count parsers)) (into [] (map (first parsers)) data)
+    (= 1 (count parsers)) (into [] (map #(map-parsers (first parsers) %)) data)
     (= 2 (count parsers)) (mapv #(map-parsers %1 %2)
                                 (concat parsers (repeat (last parsers))) data)
     true (assert false)))
