@@ -2,7 +2,6 @@
          repl (shell "podman" "run"
                      "-v" (str (fs/cwd) ":" (fs/cwd) ":Z")
                      "-w" (fs/cwd)
-                     "-p" "127.0.0.1:1971:1971"
                      "--mount" "type=volume,src=clojure-cpcache,target=/root/.m2"
                      "-it"
                      "clojure:tools-deps" "-M:cider-clj")
