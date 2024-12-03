@@ -55,10 +55,13 @@
 
 (defn read-input [year day & {:keys [lines-as data-as paragraphs-as word-regex]
                               :or {word-regex #"\w+"}}]
-  (with-open [infile (io/reader (format "input/%d/%02d.txt" year day))]
-    (let [lines (->> infile line-seq (map #(re-seq word-regex %)))]
-      (cond
-        lines-as (map-parsers lines-as lines)
-        paragraphs-as (->> lines paragraphs (map-parsers paragraphs-as))))))
+  (let [path (format "input/%d/%02d.txt" year day)]
+    (if data-as
+      (data-as (slurp path))
+      (with-open [infile (io/reader path)]
+        (let [lines (->> infile line-seq (map #(re-seq word-regex %)))]
+          (cond
+            lines-as (map-parsers lines-as lines)
+            paragraphs-as (->> lines paragraphs (map-parsers paragraphs-as))))))))
     
   
