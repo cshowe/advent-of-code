@@ -7,13 +7,8 @@
     (= match "don't()") [total false]
     (not on) [total on]
     true [(+ total (* (parse-long x) (parse-long y))) on]))
-
-(defn do-part [input re]
- (->> (re-seq re input)
-      (reduce rf [0 true])
-      first
-      println))
   
-(let [data (aoc/read-input 2024 3 :data-as str)]
-  (do-part data #"mul\((\d+),(\d+)\)")
-  (do-part data #"do\(\)|don't\(\)|mul\((\d+),(\d+)\)"))
+(let [word #"do\(\)|don't\(\)|mul\((\d+),(\d+)\)"
+      data (aoc/read-input 2024 3 :word-regex word :data-as [vec])]
+  (println (->> data (remove #(-> % second nil?)) (reduce rf [0 true]) first)
+           (->> data  (reduce rf [0 true]) first)))
