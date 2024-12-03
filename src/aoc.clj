@@ -46,26 +46,19 @@
 (defn- map-parsers [parsers data]
   (cond
     (fn? parsers) (parsers data)
-    (= 1 (count parsers)) (into [] (map #(map-parsers (first parsers) %)) data)
-    (= 2 (count parsers)) (mapv #(map-parsers %1 %2)
-                                (concat parsers (repeat (last parsers))) data)
-    true (assert false)))
+    true  (mapv #(map-parsers %1 %2)
+                (concat parsers (repeat (last parsers))) data)))
+
+(defn- paragraphs [aseq]
+  (letfn [(break? [x] (and (= 1 (count x)) (= nil (first x))))]
+    (->> aseq (partition-by empty?) (remove break?))))
 
 (defn read-input [year day & {:keys [lines-as data-as paragraphs-as word-regex]
                               :or {word-regex #"\w+"}}]
   (with-open [infile (io/reader (format "input/%d/%02d.txt" year day))]
-    (cond
-      lines-as (->> infile
-                    line-seq
-                    (map #(re-seq word-regex %))
-                    (map-parsers lines-as))
-      paragraphs-as
-      (let [paragraphs (->> infile
-                            line-seq
-                            (map #(re-seq word-regex %))
-                            (partition-by empty?)
-                            (remove #(and (= 1 (count %))
-                                          (= nil (first %)))))]
-        (map-parsers paragraphs-as paragraphs)))))
+    (let [lines (->> infile line-seq (map #(re-seq word-regex %)))]
+      (cond
+        lines-as (map-parsers lines-as lines)
+        paragraphs-as (->> lines paragraphs (map-parsers paragraphs-as))))))
     
   
