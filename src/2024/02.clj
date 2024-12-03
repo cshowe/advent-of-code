@@ -1,6 +1,5 @@
 (ns aoc.2024.02
-  (:require [aoc :as aoc]
-            [clojure.spec.alpha :as s]))
+  (:require [aoc :as aoc]))
 
 (defn is-safe? [x]
   (let [ds (mapv #(apply - %) (partition 2 1 x))
