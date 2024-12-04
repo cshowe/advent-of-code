@@ -10,21 +10,15 @@
   (loop [[l & target] target
          [d & deltas] deltas
          locations (letter-locs start)]
-    (if (nil? l) locations
+    (if (nil? l) (set locations)
         (let [new-letter-locs (letter-locs l)
               xform (comp (map #(mapv + d %)) (filter new-letter-locs))]
           (recur target deltas (sequence xform locations))))))
   
 (let [raw (aoc/read-input 2024 4 :word-regex nil :lines-as aoc/grid)
-      data (-> (group-by second raw) (update-vals #(into #{} (map first) %)))]
-  (->> (for [d grid8]
-         (->> (word-search data (repeat 3 d) "XMAS") count))
-       (reduce +)
-       println)
-  (->> (for [d1 [[-1 -1][-1 1][1 -1][1 1]]
-             a2 [[0 1] [1 0]]]
-         (let [s2 (mapv * d1 a2 [2 2])
-               path [d1 (mapv #(* -2 %) d1) s2 (mapv * (mapv - d1 s2) [2 2])]]
-           (->> (word-search data path "AMSMS") count)))
-       (reduce +)
-       println))
+      data (-> (group-by second raw) (update-vals #(into #{} (map first) %)))
+      find-xmas #(word-search data (repeat 3 %) "XMAS")
+      find-mas (fn [x] (word-search data [(mapv #(* -2 %) x) x] "SMA"))]
+  (println (->> grid8 (pmap (comp count find-xmas)) (reduce +))
+           (let [[a b c d] (pmap find-mas [[-1 -1] [1 1] [-1 1] [1 -1]])]
+             (count (s/intersection (s/union a b) (s/union c d))))))
