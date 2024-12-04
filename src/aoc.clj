@@ -24,34 +24,29 @@
                             parts)
       true (recur (-> spec (conj (-> n str keyword)) (conj part)) (inc n) parts))))
 
-(defn specs [spec]
-  (fn [data]
-    (let [conformed (s/conform spec data)]
-      (if (s/invalid? conformed)
-        (s/explain spec data)
-        (walk/prewalk (fn [x]
-                        (if (map? x)
-                          (let [all-ks (keys x)
-                                ks (remove #(parse-long (name %)) all-ks)]
-                            (select-keys x ks))
-                          x))
-                      conformed)))))
+(defn apply-specish [spec data]
+  (let [conformed (s/conform spec data)]
+    (if (s/invalid? conformed)
+      (s/explain spec data)
+      (walk/prewalk (fn [x]
+                      (if (map? x)
+                        (let [all-ks (keys x)
+                              ks (remove #(parse-long (name %)) all-ks)]
+                          (select-keys x ks))
+                        x))
+                    conformed)))))
 
-(defn tuples [& parsers]
-  (fn [data]
-    (let [parts data]
-      (assert (= (count parts) (count parsers)) data)
-      (into [] (map #(%1 %2) parsers parts)))))
+(defn grid [lines]
+  (into {} (for [[row line] (map-indexed vector lines)
+                 [col char] (map-indexed vector line)]
+             [[row col] char])))
 
 (defn- map-parsers [parsers data]
   (cond
     (fn? parsers) (parsers data)
-    true  (mapv #(map-parsers %1 %2)
-                (concat parsers (repeat (last parsers))) data)))
-
-(defn- paragraphs [aseq]
-  (letfn [(break? [x] (and (= 1 (count x)) (= nil (first x))))]
-    (->> aseq (partition-by empty?) (remove break?))))
+    (vector? parsers) (mapv #(map-parsers %1 %2)
+                            (concat parsers (repeat (last parsers))) data)
+    true (apply-specish parsers data)))
 
 (defn read-input [year day & {:keys [lines-as data-as paragraphs-as word-regex]
                               :or {word-regex #"\w+"}}]
@@ -59,16 +54,6 @@
     (cond->> (line-seq infile)
       word-regex (map #(re-seq word-regex %))
       data-as (apply concat)
-      paragraphs-as paragraphs
+      paragraphs-as (partition-by empty?)
+      paragraphs-as (remove #(= % [nil]))
       true (map-parsers (or data-as lines-as paragraphs-as)))))
-      ;(or lines-as paragraphs-as) map-parsers)))
-      
-       
-;  (let [path ]
-;    (if data-as
-;      (data-as (slurp path))
-;      (with-open [infile (io/reader path)]
-;        (let [lines (->> infile line-seq (map #(re-seq word-regex %)))]
-;          (cond
-;            lines-as (map-parsers lines-as lines)
-;            paragraphs-as (->> lines paragraphs (map-parsers paragraphs-as))))))))
